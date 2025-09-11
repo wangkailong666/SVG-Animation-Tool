@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Online SVG Animation Tool</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; color: #333; }
+  header, footer { background: #eee; padding: 10px; text-align: center; }
+  nav a { margin: 0 10px; text-decoration: none; color: #333; }
+  .container { padding: 20px; max-width: 1200px; margin: auto; display: flex; }
+  .left-panel { flex: 3; padding-right: 20px; }
+  .right-panel { flex: 1; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
+  textarea { width: 100%; height: 120px; margin-bottom: 10px; }
+  select, input, button { margin: 5px 0; padding: 5px; }
+  .preview-box { border: 1px dashed #ccc; background: #f0f0f0; height: 400px; display: flex; align-items: center; justify-content: center; position: relative; }
+  #preview svg { max-width: 100%; max-height: 100%; cursor: pointer; }
+  .coords { position: absolute; bottom: 5px; left: 5px; background: rgba(255,255,255,0.8); padding: 2px 6px; font-size: 12px; border-radius: 3px; }
+  .highlight { stroke: red !important; stroke-width: 2 !important; }
+  .attr-editor label, .param-editor label { display: block; margin-top: 5px; font-size: 14px; }
+  .attr-editor input, .param-editor input, .param-editor select { width: 100%; padding: 4px; }
+  .param-editor { margin-top: 10px; }
+</style>
+</head>
+<body>
+<header>
+<h1>Free Online SVG Animation Tool</h1>
+<nav>
+  <a href="#">Home</a>
+  <a href="#">Functionality</a>
+  <a href="#">User Manual</a>
+  <a href="#">Case Studies</a>
+  <a href="#">Privacy</a>
+  <a href="#">Contact Us</a>
+  <button onclick="toggleLang()">EN</button>
+</nav>
+</header>
+
+<div class="container">
+<div class="left-panel">
+<h2>Upload or Paste SVG</h2>
+<input type="file" id="fileInput" accept="image/svg+xml" />
+<textarea id="svgInput" placeholder="Paste SVG code here..."></textarea>
+<button onclick="previewSVG()">Preview</button>
+<button onclick="clearSVG()">Clear</button>
+
+<h2>Element Selection</h2>
+<select id="elementSelect"><option value="">-- Select an element --</option></select>
+
+<h2>Animation Settings</h2>
+<label>Animation Type: 
+<select id="animationType"></select>
+</label>
+<div class="param-editor" id="paramEditor"></div>
+<button onclick="applyAnimation()">Apply Animation</button>
+
+<h2>Preview</h2>
+<div class="preview-box">
+<div id="preview">SVG Preview Here</div>
+<div class="coords" id="coords">x: -, y: -</div>
+</div>
+
+<p>Selected Element: <span id="selectedElement">None</span></p>
+
+<button onclick="downloadSVG()">Download SVG</button>
+<button onclick="copySVG()">Copy SVG</button>
+</div>
+
+<div class="right-panel">
+<h3>Element Attributes</h3>
+<div id="attrEditor" class="attr-editor">
+<p>No element selected.</p>
+</div>
+</div>
+</div>
+
+<footer>
+<p>All processing happens locally. No SVGs or personal data are collected.</p>
+</footer>
+
+<script>
+let currentSVG = "";
+let selectedNode = null;
+const animTypes = [
+  {name:"Fill Color", key:"fill"},
+  {name:"Stroke Color", key:"stroke"},
+  {name:"Translate", key:"translate"},
+  {name:"Rotate", key:"rotate"},
+  {name:"Scale", key:"scale"},
+  {name:"Opacity", key:"opacity"},
+  {name:"Path Draw", key:"path-draw"},
+  {name:"Fade In", key:"fade-in"},
+  {name:"Slide Left", key:"slide-left"},
+  {name:"Slide Right", key:"slide-right"},
+  {name:"Zoom In", key:"zoom-in"},
+  {name:"Bounce In", key:"bounce-in"},
+  {name:"Pulse", key:"pulse"},
+  {name:"Shake", key:"shake"},
+  {name:"Bounce", key:"bounce"},
+  {name:"Float", key:"float"},
+  {name:"Fade Out", key:"fade-out"},
+  {name:"Zoom Out", key:"zoom-out"}
+];
+
+// Populate animation type dropdown
+const animSelect = document.getElementById('animationType');
+animTypes.forEach(type => {
+  const opt = document.createElement('option');
+  opt.value = type.key;
+  opt.textContent = type.name;
+  animSelect.appendChild(opt);
+});
+
+animSelect.addEventListener('change', updateParamEditor);
+
+function updateParamEditor() {
+  const type = animSelect.value;
+  const editor = document.getElementById('paramEditor');
+  editor.innerHTML = '';
+  if(!type) return;
+  const fields = getDefaultParams(type);
+  for(const key in fields){
+    const label = document.createElement('label');
+    label.textContent = key;
+    let input;
+    if(key.toLowerCase().includes('color')){
+      input = document.createElement('input'); input.type='color';
+    } else if(key.toLowerCase().includes('loop')){
+      input = document.createElement('select');
+      ['1','indefinite'].forEach(optv=>{const o=document.createElement('option');o.value=optv;o.textContent=optv;input.appendChild(o)});
+    } else {
+      input = document.createElement('input'); input.type='number'; input.step='0.1';
+    }
+    input.value = fields[key];
+    input.id = `param-${key}`;
+    label.appendChild(input);
+    editor.appendChild(label);
+  }
+}
+
+function getDefaultParams(type){
+  switch(type){
+    case 'fill': return {Color:'#ff0000', Duration:2, Loop:'indefinite'};
+    case 'stroke': return {Color:'#000000', Duration:2, Loop:'indefinite'};
+    case 'translate': return {X:50, Y:0, Duration:2, Loop:'indefinite'};
+    case 'rotate': return {Angle:360, CX:50, CY:50, Duration:2, Loop:'indefinite'};
+    case 'scale': return {From:1, To:1.5, Duration:2, Loop:'indefinite'};
+    case 'opacity': return {From:1, To:0, Duration:2, Loop:'indefinite'};
+    case 'path-draw': return {From:200, To:0, Duration:2, Loop:'indefinite'};
+    default: return {Duration:2, Loop:'indefinite'};
+  }
+}
+
+document.getElementById('fileInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = evt => {document.getElementById('svgInput').value = evt.target.result;};
+    reader.readAsText(file);
+  }
+});
+
+function previewSVG(){
+  const svgCode = document.getElementById('svgInput').value;
+  currentSVG = svgCode;
+  const previewDiv = document.getElementById('preview');
+  previewDiv.innerHTML = '<rect x="0" y="0" width="100%" height="100%" fill="#ddd" />'+svgCode;
+  bindCoords();
+  bindElementSelect();
+  populateElementSelect();
+}
+
+function clearSVG(){
+  document.getElementById('preview').innerHTML='';
+  selectedNode=null;
+  document.getElementById('selectedElement').innerText='None';
+  document.getElementById('elementSelect').innerHTML='<option value="">-- Select an element --</option>';
+  document.getElementById('attrEditor').innerHTML='<p>No element selected.</p>';
+}
+
+function bindCoords(){
+  const svg = document.querySelector('#preview svg');
+  if(!svg) return;
+  svg.addEventListener('mousemove', evt=>{
+    const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const cursor=pt.matrixTransform(svg.getScreenCTM().inverse());
+    document.getElementById('coords').innerText=`x: ${cursor.x.toFixed(1)}, y: ${cursor.y.toFixed(1)}`;
+  });
+}
+
+function bindElementSelect(){
+  const svg=document.querySelector('#preview svg');
+  if(!svg) return;
+  svg.querySelectorAll('*').forEach(el=>{
+    el.addEventListener('click',evt=>{
+      evt.stopPropagation();
+      selectElement(el);
+      document.getElementById('elementSelect').value=getElementIdentifier(el);
+    });
+  });
+}
+
+function populateElementSelect(){
+  const select=document.getElementById('elementSelect');
+  select.innerHTML='<option value="">-- Select an element --</option>';
+  const svg=document.querySelector('#preview svg');
+  svg.querySelectorAll('*').forEach(el=>{
+    const opt=document.createElement('option');
+    opt.value=getElementIdentifier(el);
+    opt.textContent=getElementIdentifier(el);
+    select.appendChild(opt);
+  });
+  select.addEventListener('change',()=>{
+    const val=select.value;
+    const svg=document.querySelector('#preview svg');
+    svg.querySelectorAll('*').forEach(el=>el.classList.remove('highlight'));
+    if(val){
+      const node=Array.from(svg.querySelectorAll('*')).find(el=>getElementIdentifier(el)===val);
+      if(node) selectElement(node);
+    }
+  });
+}
+
+function getElementIdentifier(el){
+  return el.tagName + (el.id?'#'+el.id:'') + (el.className.baseVal?'.'+el.className.baseVal:'');
+}
+
+function selectElement(el){
+  if(selectedNode) selectedNode.classList.remove('highlight');
+  selectedNode=el;
+  selectedNode.classList.add('highlight');
+  document.getElementById('selectedElement').innerText=getElementIdentifier(el);
+  showAttributes(el);
+}
+
+function showAttributes(el){
+  const editor=document.getElementById('attrEditor'); editor.innerHTML='';
+  Array.from(el.attributes).forEach(attr=>{
+    const label=document.createElement('label'); label.textContent=attr.name;
+    const input=document.createElement('input'); input.value=attr.value;
+    input.addEventListener('input',()=>{el.setAttribute(attr.name,input.value);currentSVG=document.getElementById('preview').innerHTML;});
+    label.appendChild(input); editor.appendChild(label);
+  });
+  if(!el.attributes.length) editor.innerHTML='<p>No attributes available.</p>';
+}
+
+function applyAnimation(){
+  if(!selectedNode){alert('Select an element first!'); return;}
+  const type=animSelect.value;
+  const params=getParamsFromForm(type);
+  let anim='';
+  switch(type){
+    case 'fill': anim=`<animate attributeName="fill" values="${params.Color};blue;${params.Color}" dur="${params.Duration}s" repeatCount="${params.Loop}" />`; break;
+    case 'stroke': anim=`<animate attributeName="stroke" values="${params.Color};orange;${params.Color}" dur="${params.Duration}s" repeatCount="${params.Loop}" />`; break;
+    case 'translate': anim=`<animateTransform attributeName="transform" type="translate" from="0 0" to="${params.X} ${params.Y}" dur="${params.Duration}s" repeatCount="${params.Loop}" />`; break;
+    case 'rotate': anim=`<animateTransform attributeName="transform" type="rotate" from="0 ${params.CX} ${params.CY}" to="${params.Angle} ${params.CX} ${params.CY}" dur="${params.Duration}s" repeatCount="${params.Loop}" />`; break;
+    case 'scale': anim=`<animateTransform attributeName="transform" type="scale" values="${params.From};${params.To};${params.From}" dur="${params.Duration}s" repeatCount="${params.Loop}" />`; break;
+    case 'opacity': anim=`<animate attributeName="opacity" values="${params.From};${params.To};${params.From}" dur="${params.Duration}s" repeatCount="${params.Loop}" />`; break;
+    case 'path-draw': anim=`<animate attributeName="stroke-dashoffset" from="${params.From}" to="${params.To}" dur="${params.Duration}s" repeatCount="${params.Loop}" />`; break;
+    default: anim=`<animate attributeName="opacity" values="1;0;1" dur="2s" repeatCount="indefinite" />`;
+  }
+  selectedNode.innerHTML+=anim;
+  currentSVG=document.getElementById('preview').innerHTML;
+}
+
+function getParamsFromForm(type){
+  const fields=getDefaultParams(type);
+  const params={};
+  for(const key in fields){
+    const input=document.getElementById(`param-${key}`);
+    if(input){
+      params[key]=input.value;
+    }
+  }
+  return params;
+}
+
+function downloadSVG(){
+  const blob=new Blob([currentSVG],{type:'image/svg+xml'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='animated.svg'; a.click(); URL.revokeObjectURL(url);
+}
+
+function copySVG(){
+  navigator.clipboard.writeText(currentSVG).then(()=>alert('SVG copied to clipboard'));
+}
+
+function toggleLang(){alert('Language toggle placeholder (currently EN only)');}
+</script>
+</body>
+</html>
