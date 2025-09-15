@@ -39,17 +39,17 @@
   <div class="lang-switcher">
     <button onclick="toggleLang()" class="lang-btn">EN</button>
     <div class="lang-dropdown" id="langDropdown">
-      <a href="#" onclick="changeLang('en')">English</a>
-      <a href="#" onclick="changeLang('ja')">日本語</a>
-      <a href="#" onclick="changeLang('ko')">한국어</a>
-      <a href="#" onclick="changeLang('de')">Deutsch</a>
-      <a href="#" onclick="changeLang('es')">Español</a>
-      <a href="#" onclick="changeLang('fr')">Français</a>
-      <a href="#" onclick="changeLang('pt')">Português</a>
-      <a href="#" onclick="changeLang('ar')">العربية</a>
-      <a href="#" onclick="changeLang('zh-CN')">简体中文</a>
-      <a href="#" onclick="changeLang('zh-TW')">繁體中文</a>
-      <a href="#" onclick="changeLang('id')">Bahasa Indonesia</a>
+      <a href="?lang=en" data-lang="en">English</a>
+      <a href="?lang=ja" data-lang="ja">日本語</a>
+      <a href="?lang=ko" data-lang="ko">한국어</a>
+      <a href="?lang=de" data-lang="de">Deutsch</a>
+      <a href="?lang=es" data-lang="es">Español</a>
+      <a href="?lang=fr" data-lang="fr">Français</a>
+      <a href="?lang=pt" data-lang="pt">Português</a>
+      <a href="?lang=ar" data-lang="ar">العربية</a>
+      <a href="?lang=zh-CN" data-lang="zh-CN">简体中文</a>
+      <a href="?lang=zh-TW" data-lang="zh-TW">繁體中文</a>
+      <a href="?lang=id" data-lang="id">Bahasa Indonesia</a>
     </div>
   </div>
 </nav>
@@ -480,7 +480,7 @@ function toggleLang(){
     dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
 }
 
-function changeLang(lang) {
+function changeLang(lang, pushState = true) {
     const langStrings = translations[lang];
     if (!langStrings) return;
 
@@ -498,8 +498,8 @@ function changeLang(lang) {
         }
     });
 
-    // Update the main language button
-    document.querySelector('.lang-btn').textContent = lang.toUpperCase();
+    // Update the main language button, handling codes like 'zh-CN'
+    document.querySelector('.lang-btn').textContent = lang.split('-')[0].toUpperCase();
 
     // Hide dropdown after selection
     const dropdown = document.getElementById('langDropdown');
@@ -511,10 +511,20 @@ function changeLang(lang) {
     } else {
         document.body.style.direction = 'ltr';
     }
+
+    // Update html lang attribute for SEO and accessibility
+    document.documentElement.lang = lang;
+
+    // Update URL for SEO, but only if not triggered by back/forward buttons
+    if (pushState) {
+      const url = new URL(window.location);
+      url.searchParams.set('lang', lang);
+      history.pushState({lang: lang}, '', url);
+    }
 }
 
 // Close dropdown if clicked outside
-window.onclick = function(event) {
+window.addEventListener('click', function(event) {
   if (!event.target.matches('.lang-btn')) {
     const dropdowns = document.getElementsByClassName("lang-dropdown");
     for (let i = 0; i < dropdowns.length; i++) {
@@ -524,10 +534,44 @@ window.onclick = function(event) {
       }
     }
   }
-}
+});
 
-// Set initial language
-changeLang('en');
+// Handle language switcher clicks
+document.getElementById('langDropdown').addEventListener('click', function(event) {
+    if (event.target.tagName === 'A') {
+        // The onclick attribute will be removed in a later step,
+        // but this listener is forward-compatible with that change.
+        const lang = event.target.getAttribute('data-lang');
+        if (lang) {
+            event.preventDefault();
+            changeLang(lang);
+        }
+    }
+});
+
+// Handle back/forward browser buttons to sync language
+window.addEventListener('popstate', function(event) {
+    if (event.state && event.state.lang) {
+        changeLang(event.state.lang, false);
+    } else {
+        const urlParams = new URLSearchParams(window.location.search);
+        const lang = urlParams.get('lang') || 'en';
+        changeLang(lang, false);
+    }
+});
+
+// Set initial language from URL on page load, or default to 'en'
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const lang = urlParams.get('lang');
+    const validLangs = Object.keys(translations);
+    if (lang && validLangs.includes(lang)) {
+        changeLang(lang, false);
+    } else {
+        // If no valid lang in URL, default to English but don't create a history state
+        changeLang('en', false);
+    }
+});
 </script>
 </body>
 </html>
