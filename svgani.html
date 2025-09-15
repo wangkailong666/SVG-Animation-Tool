@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta id="meta-description" name="description" content="Free SVG Animation Tool — Create and customize animated SVGs online with ease. No coding required. Export responsive animations for web, apps, or presentations.">
 <title data-i18n="title">Free Online SVG Animation Tool</title>
 <style>
   body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; color: #333; }
@@ -497,6 +498,12 @@ function changeLang(lang, pushState = true) {
             el.placeholder = langStrings[key];
         }
     });
+
+    // Update meta description for SEO
+    const metaDesc = document.getElementById('meta-description');
+    if (metaDesc && langStrings.meta_description) {
+        metaDesc.content = langStrings.meta_description;
+    }
 
     // Update the main language button, handling codes like 'zh-CN'
     document.querySelector('.lang-btn').textContent = lang.split('-')[0].toUpperCase();
