@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta id="meta-description" name="description" content="Free SVG Animation Tool — Create and customize animated SVGs online with ease. No coding required. Export responsive animations for web, apps, or presentations.">
+<link id="canonical-link" rel="canonical" href="https://freesvganimationtool.dpdns.org/">
+<!-- Hreflang links will be injected by JavaScript -->
 <title data-i18n="title">Free Online SVG Animation Tool</title>
 <style>
   body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; color: #333; }
@@ -48,8 +50,8 @@
       <a href="?lang=fr" data-lang="fr">Français</a>
       <a href="?lang=pt" data-lang="pt">Português</a>
       <a href="?lang=ar" data-lang="ar">العربية</a>
-      <a href="?lang=zh-CN" data-lang="zh-CN">简体中文</a>
-      <a href="?lang=zh-TW" data-lang="zh-TW">繁體中文</a>
+      <a href="?lang=zh-Hans" data-lang="zh-Hans">简体中文</a>
+      <a href="?lang=zh-Hant" data-lang="zh-Hant">繁體中文</a>
       <a href="?lang=id" data-lang="id">Bahasa Indonesia</a>
     </div>
   </div>
@@ -219,7 +221,7 @@
 <div id="contact" style="padding: 20px; max-width: 1200px; margin: auto; background: #fff; border: 1px solid #ccc; border-radius: 5px; margin-top: 20px;">
   <h2 data-i18n="contact_title">Contact Us</h2>
   <p data-i18n="contact_p1">Have questions, feedback, or suggestions? We'd love to hear from you.</p>
-  <p data-i18n="contact_p2">You can reach us by email at: <a href="mailto:support@svganimationtool.com">support@svganimationtool.com</a></p>
+  <p data-i18n="contact_p2">You can reach us by email at: </p> <a>anfuw25 at gmail dot com</a>
   <p data-i18n="contact_p3">Please note that as we do not collect any data, we cannot help with recovering lost work. Always save your SVGs locally.</p>
 </div>
 
@@ -522,6 +524,16 @@ function changeLang(lang, pushState = true) {
     // Update html lang attribute for SEO and accessibility
     document.documentElement.lang = lang;
 
+    // Update canonical link
+    const canonicalLink = document.getElementById('canonical-link');
+    if (canonicalLink) {
+        let href = 'https://freesvganimationtool.dpdns.org/';
+        if (lang !== 'en') { // 'en' is the default at the root URL
+            href += `?lang=${lang}`;
+        }
+        canonicalLink.href = href;
+    }
+
     // Update URL for SEO, but only if not triggered by back/forward buttons
     if (pushState) {
       const url = new URL(window.location);
@@ -546,8 +558,6 @@ window.addEventListener('click', function(event) {
 // Handle language switcher clicks
 document.getElementById('langDropdown').addEventListener('click', function(event) {
     if (event.target.tagName === 'A') {
-        // The onclick attribute will be removed in a later step,
-        // but this listener is forward-compatible with that change.
         const lang = event.target.getAttribute('data-lang');
         if (lang) {
             event.preventDefault();
@@ -567,8 +577,34 @@ window.addEventListener('popstate', function(event) {
     }
 });
 
+function generateHreflangLinks() {
+    const head = document.head;
+    const baseUrl = 'https://freesvganimationtool.dpdns.org/';
+
+    // Add x-default
+    const xDefaultLink = document.createElement('link');
+    xDefaultLink.rel = 'alternate';
+    xDefaultLink.hreflang = 'x-default';
+    xDefaultLink.href = baseUrl;
+    head.appendChild(xDefaultLink);
+
+    // Add all other languages
+    Object.keys(translations).forEach(lang => {
+        const langLink = document.createElement('link');
+        langLink.rel = 'alternate';
+        langLink.hreflang = lang;
+        let href = baseUrl;
+        if (lang !== 'en') {
+            href += `?lang=${lang}`;
+        }
+        langLink.href = href;
+        head.appendChild(langLink);
+    });
+}
+
 // Set initial language from URL on page load, or default to 'en'
 document.addEventListener('DOMContentLoaded', () => {
+    generateHreflangLinks();
     const urlParams = new URLSearchParams(window.location.search);
     const lang = urlParams.get('lang');
     const validLangs = Object.keys(translations);
