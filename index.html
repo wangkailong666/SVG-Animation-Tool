@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta id="meta-description" name="description" content="Free SVG Animation Tool — Create and customize animated SVGs online with ease. No coding required. Export responsive animations for web, apps, or presentations.">
+<link id="canonical-link" rel="canonical" href="https://freesvganimationtool.dpdns.org/">
+<!-- Hreflang links will be injected by JavaScript -->
+<title data-i18n="title">Free Online SVG Animation Tool</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; color: #333; }
+  header, footer { background: #eee; padding: 10px; text-align: center; }
+  nav a { margin: 0 10px; text-decoration: none; color: #333; }
+  .container { padding: 20px; max-width: 1200px; margin: auto; display: flex; }
+  .left-panel { flex: 3; padding-right: 20px; }
+  .right-panel { flex: 1; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; height: fit-content; }
+  textarea { width: 100%; height: 120px; margin-bottom: 10px; }
+  select, input, button { margin: 5px 0; padding: 5px; }
+  .preview-box { border: 1px dashed #ccc; background: #f0f0f0; height: 400px; display: flex; align-items: center; justify-content: center; position: relative; }
+  #preview svg { max-width: 100%; max-height: 100%; cursor: pointer; }
+  .coords { position: absolute; top: 5px; left: 5px; background: rgba(255,255,255,0.8); padding: 2px 6px; font-size: 12px; border-radius: 3px; }
+  .highlight { stroke: red !important; stroke-width: 2 !important; }
+  .attr-editor label, .param-editor label { display: block; margin-top: 5px; font-size: 14px; }
+  .attr-editor input, .param-editor input, .param-editor select { width: 100%; padding: 4px; }
+  .param-editor { margin-top: 10px; }
+  .lang-switcher { position: relative; display: inline-block; }
+  .lang-dropdown { display: none; position: absolute; background-color: #f9f9f9; min-width: 100px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1; }
+  .lang-dropdown a { color: black; padding: 12px 16px; text-decoration: none; display: block; }
+  .lang-dropdown a:hover { background-color: #f1f1f1; }
+</style>
+</head>
+<body>
+<header>
+<h1 data-i18n="title">Free Online SVG Animation Tool</h1>
+<nav>
+  <a href="#" data-i18n="nav_home">Home</a>
+  <a href="#other-tools" data-i18n="nav_other_tools">Other Free Tools</a>
+  <a href="#manual" data-i18n="nav_manual">User Manual</a>
+  <a href="#case-studies" data-i18n="nav_case_studies">Case Studies</a>
+  <a href="#privacy" data-i18n="nav_privacy">Privacy</a>
+  <a href="#contact" data-i18n="nav_contact">Contact Us</a>
+  <div class="lang-switcher">
+    <button onclick="toggleLang()" class="lang-btn">EN</button>
+    <div class="lang-dropdown" id="langDropdown">
+      <a href="?lang=en" data-lang="en">English</a>
+      <a href="?lang=ja" data-lang="ja">日本語</a>
+      <a href="?lang=ko" data-lang="ko">한국어</a>
+      <a href="?lang=de" data-lang="de">Deutsch</a>
+      <a href="?lang=es" data-lang="es">Español</a>
+      <a href="?lang=fr" data-lang="fr">Français</a>
+      <a href="?lang=pt" data-lang="pt">Português</a>
+      <a href="?lang=ar" data-lang="ar">العربية</a>
+      <a href="?lang=zh-Hans" data-lang="zh-Hans">简体中文</a>
+      <a href="?lang=zh-Hant" data-lang="zh-Hant">繁體中文</a>
+      <a href="?lang=id" data-lang="id">Bahasa Indonesia</a>
+    </div>
+  </div>
+</nav>
+</header>
+
+<div class="container">
+<div class="left-panel">
+<h2 data-i18n="upload_title">Upload or Paste SVG</h2>
+<input type="file" id="fileInput" accept="image/svg+xml" />
+<textarea id="svgInput" placeholder="Paste SVG code here..." data-i18n-placeholder="upload_placeholder"></textarea>
+<button onclick="previewSVG()" data-i18n="upload_preview_btn">Preview</button>
+<button onclick="clearSVG()" data-i18n="upload_clear_btn">Clear</button>
+
+<h2 data-i18n="selection_title">Element Selection</h2>
+<select id="elementSelect"><option value="" data-i18n="selection_default">-- Select an element --</option></select>
+
+<h2 data-i18n="settings_title">Animation Settings</h2>
+<label><span data-i18n="settings_type">Animation Type:</span> 
+<select id="animationType"></select>
+</label>
+<div class="param-editor" id="paramEditor"></div>
+<button onclick="applyAnimation()" data-i18n="settings_apply_btn">Apply Animation</button>
+
+<h2 data-i18n="preview_title">Preview</h2>
+<div class="preview-box">
+<div id="preview" data-i18n="preview_box_text">SVG Preview Here</div>
+<div class="coords" id="coords">x: -, y: -</div>
+</div>
+
+<p><span data-i18n="selected_element_label">Selected Element:</span> <span id="selectedElement" data-i18n="selected_element_none">None</span></p>
+
+<button onclick="downloadSVG()" data-i18n="download_btn">Download SVG</button>
+<button onclick="copySVG()" data-i18n="copy_btn">Copy SVG</button>
+</div>
+
+<div class="right-panel">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 220" width="1000" height="220" role="img" aria-label="SVGAnimation path draw" style="width: 100%; height: auto;">
+  <defs>
+    <style>
+      .draw {
+        font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-weight: 700;
+        font-size: 120px;
+        fill: none;
+        stroke: #0b4cff;
+        stroke-width: 3;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+        paint-order: stroke;
+        stroke-dasharray: 1200;
+        stroke-dashoffset: 1200;
+        animation: drawStroke 4s linear infinite;
+      }
+
+      .shadow {
+        font-family: inherit;
+        font-size: inherit;
+        font-weight: inherit;
+        fill: none;
+        stroke: rgba(11,76,255,0.18);
+        stroke-width: 10;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+        stroke-dasharray: 1200;
+        stroke-dashoffset: 1200;
+        filter: blur(0.4px);
+        animation: drawStroke 4s linear infinite;
+        animation-delay: 0.05s;
+      }
+
+      @keyframes drawStroke {
+        0%   { stroke-dashoffset: 1200; }
+        40%  { stroke-dashoffset: 0; }       /* fully drawn */
+        60%  { stroke-dashoffset: 0; }       /* pause filled */
+        100% { stroke-dashoffset: 1200; }    /* erase */
+      }
+
+      .underline {
+        stroke: #0b4cff;
+        stroke-width: 2.5;
+        stroke-dasharray: 400;
+        stroke-dashoffset: 400;
+        fill: none;
+        animation: drawUnderline 4s linear infinite;
+      }
+      @keyframes drawUnderline {
+        0%   { stroke-dashoffset: 400; }
+        40%  { stroke-dashoffset: 0; }
+        60%  { stroke-dashoffset: 0; }
+        100% { stroke-dashoffset: 400; }
+      }
+    </style>
+  </defs>
+
+  <!-- shadow / glow -->
+  <text class="shadow" x="50" y="140">SVGAnimation</text>
+
+  <!-- main animated stroke -->
+  <text class="draw" x="50" y="140">SVGAnimation</text>
+
+  <!-- underline flourish -->
+  <path class="underline" d="M50 160 C300 190, 700 140, 920 160" />
+</svg>
+<h3 data-i18n="attributes_title">Element Attributes</h3>
+<div id="attrEditor" class="attr-editor">
+<p data-i18n="attributes_none">No element selected.</p>
+</div>
+</div>
+</div>
+
+<div id="manual" style="padding: 20px; max-width: 1200px; margin: auto; background: #fff; border: 1px solid #ccc; border-radius: 5px; margin-top: 20px;">
+  <h2 data-i18n="manual_title">User Manual</h2>
+  <h4 data-i18n="manual_h1">1. Getting Started: Uploading or Pasting SVG</h4>
+  <ul>
+    <li data-i18n="manual_h1_p1"><strong>Upload an SVG file:</strong> Click the "Choose File" button to select an SVG file from your computer. The content will be loaded into the text area below.</li>
+    <li data-i18n="manual_h1_p2"><strong>Paste SVG code:</strong> You can directly paste your SVG code into the text area that says "Paste SVG code here...".</li>
+    <li data-i18n="manual_h1_p3"><strong>Preview:</strong> After uploading or pasting, click the "Preview" button. Your SVG will appear in the "Preview" box.</li>
+  </ul>
+  <h4 data-i18n="manual_h2">2. Selecting an Element</h4>
+  <p data-i18n="manual_h2_p1">There are two ways to select an SVG element to animate:</p>
+  <ul>
+    <li data-i18n="manual_h2_p2"><strong>Click on the element:</strong> Simply click on any part of your SVG in the preview box. The selected element will be highlighted in red.</li>
+    <li data-i18n="manual_h2_p3"><strong>Use the dropdown menu:</strong> The "Element Selection" dropdown lists all the elements in your SVG. You can select one from the list to highlight it.</li>
+  </ul>
+  <p data-i18n="manual_h2_p4">The currently selected element is shown next to "Selected Element:".</p>
+  <h4 data-i18n="manual_h3">3. Modifying Element Attributes</h4>
+  <p data-i18n="manual_h3_p1">Once an element is selected, its attributes (like <code>fill</code>, <code>stroke</code>, <code>width</code>, etc.) will appear in the "Element Attributes" panel on the right. You can edit these values directly, and the changes will be reflected in the preview in real-time.</p>
+  <h4 data-i18n="manual_h4">4. Applying Animations</h4>
+  <ul>
+    <li data-i18n="manual_h4_p1"><strong>Choose an Animation Type:</strong> Select an animation from the "Animation Type" dropdown menu.</li>
+    <li data-i18n="manual_h4_p2"><strong>Set Parameters:</strong> A form with parameters for the selected animation (like Duration, Loop, Color, etc.) will appear below the dropdown. Adjust these to your liking.</li>
+    <li data-i18n="manual_h4_p3"><strong>Apply:</strong> Click the "Apply Animation" button. The animation will be added to your selected element. You can see the result in the preview box.</li>
+    <li data-i18n="manual_h4_p4"><em>Note: You can apply multiple animations to the same element.</em></li>
+  </ul>
+  <h4 data-i18n="manual_h5">5. Finalizing Your Work</h4>
+  <ul>
+    <li data-i18n="manual_h5_p1"><strong>Download:</strong> Click the "Download SVG" button to save the animated SVG to your computer.</li>
+    <li data-i18n="manual_h5_p2"><strong>Copy:</strong> Click the "Copy SVG" button to copy the code of the animated SVG to your clipboard.</li>
+    <li data-i18n="manual_h5_p3"><strong>Clear:</strong> Click the "Clear" button to reset the application, clearing the SVG code, the preview, and all selections.</li>
+  </ul>
+</div>
+
+<div id="case-studies" style="padding: 20px; max-width: 1200px; margin: auto; background: #fff; border: 1px solid #ccc; border-radius: 5px; margin-top: 20px;">
+  <h2 data-i18n="case_studies_title">Case Studies</h2>
+  <h4 data-i18n="case_studies_h1">1. Animated Website Logo</h4>
+  <p data-i18n="case_studies_p1">A user wanted to make their website's logo more engaging. They uploaded their static SVG logo, selected the main path element, and applied a "Path Draw" animation. The result was a logo that elegantly draws itself when the page loads, catching the visitor's eye. For another great example tool, check out <a href="https://svgartista.net/" target="_blank">SVG Artista</a>.</p>
+  
+  <h4 data-i18n="case_studies_h2">2. Interactive Icon Set</h4>
+  <p data-i18n="case_studies_p2">A web developer needed a set of interactive icons for a web application. They used the tool to add a "Pulse" animation to each icon, which triggers on hover (by adding the animation inside a group and triggering it with CSS). This provided a subtle but effective visual feedback to the user.</p>
+  
+  <h4 data-i18n="case_studies_h3">3. Explainer Video Graphics</h4>
+  <p data-i18n="case_studies_p3">A content creator was making an explainer video and needed some simple animated graphics. They created basic shapes in an SVG editor, then used this tool to apply "Fade In", "Slide Left", and "Bounce In" animations to different elements. This allowed them to quickly create professional-looking animated assets for their video without complex software.</p>
+</div>
+
+<div id="privacy" style="padding: 20px; max-width: 1200px; margin: auto; background: #fff; border: 1px solid #ccc; border-radius: 5px; margin-top: 20px;">
+  <h2 data-i18n="privacy_title">Privacy Policy</h2>
+  <p data-i18n="privacy_p1">We take your privacy seriously. This tool is designed to work entirely in your browser.</p>
+  <ul>
+    <li data-i18n="privacy_l1"><strong>Local Processing:</strong> All SVG processing and animation happens locally on your computer. Your files and data are never uploaded to a server.</li>
+    <li data-i18n="privacy_l2"><strong>No Data Collection:</strong> We do not collect, store, or share any of your SVG files or personal information.</li>
+    <li data-i18n="privacy_l3"><strong>No Cookies:</strong> This website does not use cookies or any other tracking technologies.</li>
+  </ul>
+  <p data-i18n="privacy_p2">Your work is your own. We have no access to it.</p>
+</div>
+
+<div id="contact" style="padding: 20px; max-width: 1200px; margin: auto; background: #fff; border: 1px solid #ccc; border-radius: 5px; margin-top: 20px;">
+  <h2 data-i18n="contact_title">Contact Us</h2>
+  <p data-i18n="contact_p1">Have questions, feedback, or suggestions? We'd love to hear from you.</p>
+  <p data-i18n="contact_p2">You can reach us by email at: </p> <a>anfuw25 at gmail dot com</a>
+  <p data-i18n="contact_p3">Please note that as we do not collect any data, we cannot help with recovering lost work. Always save your SVGs locally.</p>
+</div>
+
+<div id="other-tools" style="padding: 20px; max-width: 1200px; margin: auto; background: #fff; border: 1px solid #ccc; border-radius: 5px; margin-top: 20px;">
+  <h2 data-i18n="other_tools_title">Other Free Tools</h2>
+  <ul>
+    <li><a href="https://jakearchibald.github.io/svgomg/" target="_blank">SVGOMG</a> - <span data-i18n="other_tools_svgomg">A tool for optimizing SVG files.</span></li>
+    <li><a href="https://aydos.com/svgedit/" target="_blank">SVG Path Editor</a> - <span data-i18n="other_tools_path">A tool for visualizing and editing SVG paths.</span></li>
+    <li><a href="https://haikei.app/" target="_blank">Haikei</a> - <span data-i18n="other_tools_haikei">A web app to generate unique SVG shapes, backgrounds, and patterns.</span></li>
+    <li><a href="https://www.softr.io/tools/svg-shape-generator" target="_blank">SVG Shape Generator</a> - <span data-i18n="other_tools_shape">A tool for creating custom SVG shapes.</span></li>
+  </ul>
+</div>
+
+<footer >
+<p data-i18n="footer_text">All processing happens locally. No SVGs or personal data are collected.</p>
+</footer>
+
+<script src="translations.js"></script>
+<script>
+let currentSVG = "";
+let selectedNode = null;
+const animTypes = [
+  {name:"Fill Color", key:"fill"},
+  {name:"Stroke Color", key:"stroke"},
+  {name:"Translate", key:"translate"},
+  {name:"Rotate", key:"rotate"},
+  {name:"Scale", key:"scale"},
+  {name:"Opacity", key:"opacity"},
+  {name:"Path Draw", key:"path-draw"},
+  {name:"Fade In", key:"fade-in"},
+  {name:"Slide Left", key:"slide-left"},
+  {name:"Slide Right", key:"slide-right"},
+  {name:"Zoom In", key:"zoom-in"},
+  {name:"Bounce In", key:"bounce-in"},
+  {name:"Pulse", key:"pulse"},
+  {name:"Shake", key:"shake"},
+  {name:"Bounce", key:"bounce"},
+  {name:"Float", key:"float"},
+  {name:"Fade Out", key:"fade-out"},
+  {name:"Zoom Out", key:"zoom-out"}
+];
+
+// Populate animation type dropdown
+const animSelect = document.getElementById('animationType');
+animTypes.forEach(type => {
+  const opt = document.createElement('option');
+  opt.value = type.key;
+  opt.textContent = type.name;
+  animSelect.appendChild(opt);
+});
+
+animSelect.addEventListener('change', updateParamEditor);
+
+function updateParamEditor() {
+  const type = animSelect.value;
+  const editor = document.getElementById('paramEditor');
+  editor.innerHTML = '';
+  if(!type) return;
+  const fields = getDefaultParams(type);
+  for(const key in fields){
+    const label = document.createElement('label');
+    label.textContent = key;
+    let input;
+    if(key.toLowerCase().includes('color')){
+      input = document.createElement('input'); input.type='color';
+    } else if(key.toLowerCase().includes('loop')){
+      input = document.createElement('select');
+      ['1','indefinite'].forEach(optv=>{const o=document.createElement('option');o.value=optv;o.textContent=optv;input.appendChild(o)});
+    } else {
+      input = document.createElement('input'); input.type='number'; input.step='0.1';
+    }
+    input.value = fields[key];
+    input.id = `param-${key}`;
+    label.appendChild(input);
+    editor.appendChild(label);
+  }
+}
+
+function getDefaultParams(type){
+  switch(type){
+    case 'fill': return {Color:'#ff0000', Duration:2, Loop:'indefinite'};
+    case 'stroke': return {Color:'#000000', Duration:2, Loop:'indefinite'};
+    case 'translate': return {X:50, Y:0, Duration:2, Loop:'indefinite'};
+    case 'rotate': return {Angle:360, CX:50, CY:50, Duration:2, Loop:'indefinite'};
+    case 'scale': return {From:1, To:1.5, Duration:2, Loop:'indefinite'};
+    case 'opacity': return {From:1, To:0, Duration:2, Loop:'indefinite'};
+    case 'path-draw': return {From:200, To:0, Duration:2, Loop:'indefinite'};
+    case 'fade-in': return {Duration:1, Loop:'indefinite'};
+    case 'fade-out': return {Duration:1, Loop:'indefinite'};
+    case 'slide-left': return {Duration:1, Loop:'indefinite', From:0, To:-50};
+    case 'slide-right': return {Duration:1, Loop:'indefinite', From:0, To:50};
+    case 'zoom-in': return {Duration:1, Loop:'indefinite'};
+    case 'zoom-out': return {Duration:1, Loop:'indefinite'};
+    case 'bounce-in': return {Duration:1, Loop:'indefinite'};
+    case 'bounce': return {Duration:1, Loop:'indefinite'};
+    case 'shake': return {Duration:0.5, Loop:'indefinite'};
+    case 'pulse': return {Duration:1, Loop:'indefinite'};
+    case 'float': return {Duration:2, Loop:'indefinite'};
+    default: return {Duration:2, Loop:'indefinite'};
+  }
+}
+
+document.getElementById('fileInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = evt => {document.getElementById('svgInput').value = evt.target.result;};
+    reader.readAsText(file);
+  }
+});
+
+function previewSVG(){
+  const svgCode = document.getElementById('svgInput').value;
+  currentSVG = svgCode;
+  const previewDiv = document.getElementById('preview');
+  previewDiv.innerHTML = '<rect x="0" y="0" width="100%" height="100%" fill="#ddd" />'+svgCode;
+  bindCoords();
+  bindElementSelect();
+  populateElementSelect();
+}
+
+function clearSVG(){
+  document.getElementById('svgInput').value = '';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('preview').innerHTML='';
+  selectedNode=null;
+  document.getElementById('selectedElement').innerText='None';
+  document.getElementById('elementSelect').innerHTML='<option value="">-- Select an element --</option>';
+  document.getElementById('attrEditor').innerHTML='<p>No element selected.</p>';
+}
+
+function bindCoords(){
+  const svg = document.querySelector('#preview svg');
+  if(!svg) return;
+  svg.addEventListener('mousemove', evt=>{
+    const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    const cursor=pt.matrixTransform(svg.getScreenCTM().inverse());
+    document.getElementById('coords').innerText=`x: ${cursor.x.toFixed(1)}, y: ${cursor.y.toFixed(1)}`;
+  });
+}
+
+function bindElementSelect(){
+  const svg=document.querySelector('#preview svg');
+  if(!svg) return;
+  svg.querySelectorAll('*').forEach(el=>{
+    el.addEventListener('click',evt=>{
+      evt.stopPropagation();
+      selectElement(el);
+      document.getElementById('elementSelect').value=getElementIdentifier(el);
+    });
+  });
+}
+
+function populateElementSelect(){
+  const select=document.getElementById('elementSelect');
+  select.innerHTML='<option value="">-- Select an element --</option>';
+  const svg=document.querySelector('#preview svg');
+  svg.querySelectorAll('*').forEach(el=>{
+    const opt=document.createElement('option');
+    opt.value=getElementIdentifier(el);
+    opt.textContent=getElementIdentifier(el);
+    select.appendChild(opt);
+  });
+  select.addEventListener('change',()=>{
+    const val=select.value;
+    const svg=document.querySelector('#preview svg');
+    svg.querySelectorAll('*').forEach(el=>el.classList.remove('highlight'));
+    if(val){
+      const node=Array.from(svg.querySelectorAll('*')).find(el=>getElementIdentifier(el)===val);
+      if(node) selectElement(node);
+    }
+  });
+}
+
+function getElementIdentifier(el){
+  return el.tagName + (el.id?'#'+el.id:'') + (el.className.baseVal?'.'+el.className.baseVal:'');
+}
+
+function selectElement(el){
+  if(selectedNode) selectedNode.classList.remove('highlight');
+  selectedNode=el;
+  selectedNode.classList.add('highlight');
+  document.getElementById('selectedElement').innerText=getElementIdentifier(el);
+  showAttributes(el);
+}
+
+function showAttributes(el){
+  const editor=document.getElementById('attrEditor'); editor.innerHTML='';
+  Array.from(el.attributes).forEach(attr=>{
+    const label=document.createElement('label'); label.textContent=attr.name;
+    const input=document.createElement('input'); input.value=attr.value;
+    input.addEventListener('input',()=>{el.setAttribute(attr.name,input.value);currentSVG=document.getElementById('preview').innerHTML;});
+    label.appendChild(input); editor.appendChild(label);
+  });
+  if(!el.attributes.length) editor.innerHTML='<p>No attributes available.</p>';
+}
+
+function applyAnimation(){
+  if(!selectedNode){alert('Select an element first!'); return;}
+  const type=animSelect.value;
+  const params=getParamsFromForm(type);
+  let anim='';
+  const dur = `${params.Duration}s`;
+  const rep = params.Loop;
+  const freeze = 'fill="freeze"';
+
+  switch(type){
+    case 'fill': anim=`<animate attributeName="fill" values="${params.Color};blue;${params.Color}" dur="${dur}" repeatCount="${rep}" />`; break;
+    case 'stroke': anim=`<animate attributeName="stroke" values="${params.Color};orange;${params.Color}" dur="${dur}" repeatCount="${rep}" />`; break;
+    case 'translate': anim=`<animateTransform attributeName="transform" type="translate" from="0 0" to="${params.X} ${params.Y}" dur="${dur}" repeatCount="${rep}" ${rep !== 'indefinite' ? freeze : ''} />`; break;
+    case 'rotate': anim=`<animateTransform attributeName="transform" type="rotate" from="0 ${params.CX} ${params.CY}" to="${params.Angle} ${params.CX} ${params.CY}" dur="${dur}" repeatCount="${rep}" ${rep !== 'indefinite' ? freeze : ''} />`; break;
+    case 'scale': anim=`<animateTransform attributeName="transform" type="scale" values="${params.From};${params.To};${params.From}" dur="${dur}" repeatCount="${rep}" />`; break;
+    case 'opacity': anim=`<animate attributeName="opacity" values="${params.From};${params.To};${params.From}" dur="${dur}" repeatCount="${rep}" />`; break;
+    case 'path-draw': const len = selectedNode.getTotalLength ? selectedNode.getTotalLength() : 200; selectedNode.style.strokeDasharray=len; anim=`<animate attributeName="stroke-dashoffset" from="${len}" to="0" dur="${dur}" repeatCount="${rep}" ${rep !== 'indefinite' ? freeze : ''} />`; break;
+    
+    case 'fade-in': anim=`<animate attributeName="opacity" from="0" to="1" dur="${dur}" repeatCount="${rep}" ${freeze} />`; break;
+    case 'fade-out': anim=`<animate attributeName="opacity" from="1" to="0" dur="${dur}" repeatCount="${rep}" ${freeze} />`; break;
+    case 'slide-left': anim=`<animateTransform attributeName="transform" type="translate" from="${params.From}" to="${params.To} 0" dur="${dur}" repeatCount="${rep}" ${freeze} />`; break;
+    case 'slide-right': anim=`<animateTransform attributeName="transform" type="translate" from="${params.From}" to="${params.To} 0" dur="${dur}" repeatCount="${rep}" ${freeze} />`; break;
+    case 'zoom-in': anim=`<animateTransform attributeName="transform" type="scale" from="0" to="1" dur="${dur}" repeatCount="${rep}" ${freeze} />`; break;
+    case 'zoom-out': anim=`<animateTransform attributeName="transform" type="scale" from="1" to="0" dur="${dur}" repeatCount="${rep}" ${freeze} />`; break;
+    
+    case 'bounce-in': anim=`<animateTransform attributeName="transform" type="scale" dur="${dur}" repeatCount="${rep}" values="0.1; 1.2; 0.9; 1.1; 1" keyTimes="0; 0.4; 0.6; 0.8; 1" calcMode="spline" keySplines="0.215 0.61 0.355 1; 0.215 0.61 0.355 1; 0.215 0.61 0.355 1; 0.215 0.61 0.355 1" ${freeze} />`; break;
+    case 'bounce': anim=`<animateTransform attributeName="transform" type="translate" dur="${dur}" repeatCount="${rep}" values="0 0; 0 -15; 0 0; 0 -7; 0 0" keyTimes="0; 0.4; 0.6; 0.8; 1" ${rep !== 'indefinite' ? freeze : ''} />`; break;
+    case 'shake': anim=`<animateTransform attributeName="transform" type="translate" dur="${dur}" repeatCount="${rep}" values="0 0; -10 0; 10 0; -10 0; 10 0; 0 0" keyTimes="0; 0.2; 0.4; 0.6; 0.8; 1" ${rep !== 'indefinite' ? freeze : ''} />`; break;
+    case 'pulse': anim=`<animateTransform attributeName="transform" type="scale" dur="${dur}" repeatCount="${rep}" values="1; 1.1; 1" keyTimes="0; 0.5; 1" ${rep !== 'indefinite' ? freeze : ''} />`; break;
+    case 'float': anim=`<animateTransform attributeName="transform" type="translate" dur="${dur}" repeatCount="${rep}" values="0 0; 0 -10; 0 0" keyTimes="0; 0.5; 1" ${rep !== 'indefinite' ? freeze : ''} />`; break;
+    
+    default: anim=``;
+  }
+  selectedNode.innerHTML+=anim;
+  currentSVG=document.getElementById('preview').innerHTML;
+}
+
+function getParamsFromForm(type){
+  const fields=getDefaultParams(type);
+  const params={};
+  for(const key in fields){
+    const input=document.getElementById(`param-${key}`);
+    if(input){
+      params[key]=input.value;
+    }
+  }
+  return params;
+}
+
+function downloadSVG(){
+  const blob=new Blob([currentSVG],{type:'image/svg+xml'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='animated.svg'; a.click(); URL.revokeObjectURL(url);
+}
+
+function copySVG(){
+  navigator.clipboard.writeText(currentSVG).then(()=>alert('SVG copied to clipboard'));
+}
+
+function toggleLang(){
+    const dropdown = document.getElementById('langDropdown');
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+}
+
+function changeLang(lang, pushState = true) {
+    const langStrings = translations[lang];
+    if (!langStrings) return;
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (langStrings[key]) {
+            el.innerHTML = langStrings[key];
+        }
+    });
+
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (langStrings[key]) {
+            el.placeholder = langStrings[key];
+        }
+    });
+
+    // Update meta description for SEO
+    const metaDesc = document.getElementById('meta-description');
+    if (metaDesc && langStrings.meta_description) {
+        metaDesc.content = langStrings.meta_description;
+    }
+    
+    // Update the main language button, handling codes like 'zh-CN'
+    document.querySelector('.lang-btn').textContent = lang.split('-')[0].toUpperCase();
+
+    // Hide dropdown after selection
+    const dropdown = document.getElementById('langDropdown');
+    dropdown.style.display = 'none';
+    
+    // For Arabic, align text to the right
+    if (lang === 'ar') {
+        document.body.style.direction = 'rtl';
+    } else {
+        document.body.style.direction = 'ltr';
+    }
+
+    // Update html lang attribute for SEO and accessibility
+    document.documentElement.lang = lang;
+
+    // Update canonical link
+    const canonicalLink = document.getElementById('canonical-link');
+    if (canonicalLink) {
+        let href = 'https://freesvganimationtool.dpdns.org/';
+        if (lang !== 'en') { // 'en' is the default at the root URL
+            href += `?lang=${lang}`;
+        }
+        canonicalLink.href = href;
+    }
+
+    // Update URL for SEO, but only if not triggered by back/forward buttons
+    if (pushState) {
+      const url = new URL(window.location);
+      url.searchParams.set('lang', lang);
+      history.pushState({lang: lang}, '', url);
+    }
+}
+
+// Close dropdown if clicked outside
+window.addEventListener('click', function(event) {
+  if (!event.target.matches('.lang-btn')) {
+    const dropdowns = document.getElementsByClassName("lang-dropdown");
+    for (let i = 0; i < dropdowns.length; i++) {
+      let openDropdown = dropdowns[i];
+      if (openDropdown.style.display === 'block') {
+        openDropdown.style.display = 'none';
+      }
+    }
+  }
+});
+
+// Handle language switcher clicks
+document.getElementById('langDropdown').addEventListener('click', function(event) {
+    if (event.target.tagName === 'A') {
+        const lang = event.target.getAttribute('data-lang');
+        if (lang) {
+            event.preventDefault();
+            changeLang(lang);
+        }
+    }
+});
+
+// Handle back/forward browser buttons to sync language
+window.addEventListener('popstate', function(event) {
+    if (event.state && event.state.lang) {
+        changeLang(event.state.lang, false);
+    } else {
+        const urlParams = new URLSearchParams(window.location.search);
+        const lang = urlParams.get('lang') || 'en';
+        changeLang(lang, false);
+    }
+});
+
+function generateHreflangLinks() {
+    const head = document.head;
+    const baseUrl = 'https://freesvganimationtool.dpdns.org/';
+
+    // Add x-default
+    const xDefaultLink = document.createElement('link');
+    xDefaultLink.rel = 'alternate';
+    xDefaultLink.hreflang = 'x-default';
+    xDefaultLink.href = baseUrl;
+    head.appendChild(xDefaultLink);
+
+    // Add all other languages
+    Object.keys(translations).forEach(lang => {
+        const langLink = document.createElement('link');
+        langLink.rel = 'alternate';
+        langLink.hreflang = lang;
+        let href = baseUrl;
+        if (lang !== 'en') {
+            href += `?lang=${lang}`;
+        }
+        langLink.href = href;
+        head.appendChild(langLink);
+    });
+}
+
+// Set initial language from URL on page load, or default to 'en'
+document.addEventListener('DOMContentLoaded', () => {
+    generateHreflangLinks();
+    const urlParams = new URLSearchParams(window.location.search);
+    const lang = urlParams.get('lang');
+    const validLangs = Object.keys(translations);
+    if (lang && validLangs.includes(lang)) {
+        changeLang(lang, false);
+    } else {
+        // If no valid lang in URL, default to English but don't create a history state
+        changeLang('en', false);
+    }
+});
+</script>
+</body>
+</html>
